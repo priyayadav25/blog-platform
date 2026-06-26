@@ -1,20 +1,93 @@
-const router=require("express").Router();
-const Comment=require("../models/Comment");
+const router = require("express").Router();
 
-router.get("/:postId",async(req,res)=>{
- const comments=await Comment.find({
-  postId:req.params.postId
- });
+const Comment = require("../models/Comment");
+const Post = require("../models/Post");
+const auth = require("../middleware/auth");
 
- res.json(comments);
+// ===========================
+// Get Comments of a Post
+// ===========================
+
+router.get("/:postId", async (req, res) => {
+
+    try {
+
+        const comments = await Comment.find({
+            postId: req.params.postId
+        }).sort({
+            createdAt: -1
+        });
+
+        res.status(200).json(comments);
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+
+    }
+
 });
 
-router.post("/",async(req,res)=>{
- const comment=new Comment(req.body);
+// ===========================
+// Add Comment
+// ===========================
 
- await comment.save();
+router.post("/", auth, async (req, res) => {
 
- res.json(comment);
+    try {
+
+        const { postId, comment } = req.body;
+
+        if (!postId || !comment) {
+
+            return res.status(400).json({
+                message: "Comment cannot be empty"
+            });
+
+        }
+
+        const post = await Post.findById(postId);
+
+        if (!post) {
+
+            return res.status(404).json({
+                message: "Post Not Found"
+            });
+
+        }
+
+        const newComment = new Comment({
+
+            postId,
+
+            userId: req.user.id,
+
+            username: req.user.username,
+
+            comment
+
+        });
+
+        await newComment.save();
+
+        res.status(201).json({
+
+            message: "Comment Added",
+
+            comment: newComment
+
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+
+    }
+
 });
 
-module.exports=router;
+module.exports = router;
