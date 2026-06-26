@@ -1,76 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Blog Platform</title>
-    <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Login</title>
+
+<link rel="stylesheet"
+href="style.css">
+
 </head>
+
 <body>
 
 <div class="container">
 
-    <h1>Login</h1>
+<h1>Login</h1>
 
-    <input type="email" id="email" placeholder="Email">
+<form id="loginForm">
 
-    <input type="password" id="password" placeholder="Password">
+<input
+type="email"
+id="email"
+placeholder="Enter Email"
+required>
 
-    <button onclick="login()">Login</button>
+<input
+type="password"
+id="password"
+placeholder="Enter Password"
+required>
 
-    <p id="message"></p>
+<button type="submit">
 
-    <p>
-        Don't have an account?
-        <a href="register.html">Register</a>
-    </p>
+Login
+
+</button>
+
+</form>
+
+<p id="message"></p>
+
+<p>
+
+Don't have an account?
+
+<a href="register.html">
+
+Register
+
+</a>
+
+</p>
 
 </div>
 
 <script>
 
-async function login(){
+document
+.getElementById("loginForm")
+.addEventListener("submit", login);
 
-    const email=document.getElementById("email").value;
-    const password=document.getElementById("password").value;
+async function login(e){
 
-    if(email==="" || password===""){
-        document.getElementById("message").innerHTML="Please fill all fields";
-        return;
-    }
+e.preventDefault();
 
-    const response=await fetch("http://localhost:5000/api/auth/login",{
+const email =
+document.getElementById("email").value;
 
-        method:"POST",
+const password =
+document.getElementById("password").value;
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+try{
 
-        body:JSON.stringify({
-            email,
-            password
-        })
+const response =
+await fetch(
+"http://localhost:5000/api/auth/login",
+{
 
-    });
+method:"POST",
 
-    const data=await response.json();
+headers:{
+"Content-Type":"application/json"
+},
 
-    if(data.token){
+body:JSON.stringify({
 
-        localStorage.setItem("token",data.token);
+email,
+password
 
-        window.location="dashboard.html";
+})
 
-    }else{
+});
 
-        document.getElementById("message").innerHTML=data;
+const data =
+await response.json();
 
-    }
+if(response.ok){
+
+localStorage.setItem(
+"token",
+data.token
+);
+
+localStorage.setItem(
+"username",
+data.username
+);
+
+localStorage.setItem(
+"email",
+data.email
+);
+
+window.location =
+"dashboard.html";
+
+}else{
+
+document
+.getElementById("message")
+.innerHTML=data.message;
+
+}
+
+}catch(error){
+
+document
+.getElementById("message")
+.innerHTML=
+"Server Error";
+
+}
 
 }
 
 </script>
 
 </body>
+
 </html>
