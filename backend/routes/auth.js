@@ -1,44 +1,121 @@
-const router=require("express").Router();
-const User=require("../models/User");
-const bcrypt=require("bcryptjs");
-const jwt=require("jsonwebtoken");
+const router = require("express").Router();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-router.post("/register",async(req,res)=>{
- const hash=await bcrypt.hash(req.body.password,10);
+const User = require("../models/User");
 
- const user=new User({
-  username:req.body.username,
-  email:req.body.email,
-  password:hash
- });
+// =========================
+// Register User
+// =========================
+router.post("/register", async (req, res) => {
 
- await user.save();
+    try {
 
- res.json({message:"Registered"});
+        const { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                message: "All fields are required"
+            });
+        }
+
+        const existingUser = await User.findOne({
+            email
+        });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Email already exists"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = new User({
+            username,
+            email,
+            password: hashedPassword
+        });
+
+        await user.save();
+
+        res.status(201).json({
+            message: "User Registered Successfully"
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+
+    }
+
 });
 
-router.post("/login",async(req,res)=>{
- const user=await User.findOne({
-  email:req.body.email
- });
+// =========================
+// Login User
+// =========================
+router.post("/login", async (req, res) => {
 
- if(!user)
- return res.status(400).json("User Not Found");
+    try {
 
- const valid=await bcrypt.compare(
-  req.body.password,
-  user.password
- );
+        const { email, password } = req.body;
 
- if(!valid)
- return res.status(400).json("Wrong Password");
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "All fields are required"
+            });
+        }
 
- const token=jwt.sign(
-  {id:user._id},
-  "secretkey"
- );
+        const user = await User.findOne({
+            email
+        });
 
- res.json({token});
+        if (!user) {
+            return res.status(400).json({
+                message: "User Not Found"
+            });
+        }
+
+        const validPassword = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!validPassword) {
+            return res.status(400).json({
+                message: "Invalid Password"
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                id: user._id,
+                username: user.username,
+                email: user.email
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1d"
+            }
+        );
+
+        res.status(200).json({
+            message: "Login Successful",
+            token,
+            username: user.username,
+            email: user.email
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Server Error"
+        });
+
+    }
+
 });
 
-module.exports=router;
+module.exports = router;
