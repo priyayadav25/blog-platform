@@ -1,1 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
 
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Blog Dashboard</h1>
+
+<button onclick="logout()">Logout</button>
+
+<h2>Create New Blog</h2>
+
+<input
+type="text"
+id="title"
+placeholder="Enter Blog Title">
+
+<textarea
+id="content"
+placeholder="Write your blog here..."
+rows="6"></textarea>
+
+<button onclick="createPost()">
+Publish Blog
+</button>
+
+<hr>
+
+<h2>All Blog Posts</h2>
+
+<div id="posts"></div>
+
+</div>
+
+<script>
+
+const API="http://localhost:5000/api";
+
+const token=localStorage.getItem("token");
+
+if(!token){
+
+window.location="login.html";
+
+}
+
+async function loadPosts(){
+
+const response=await fetch(API+"/posts");
+
+const posts=await response.json();
+
+let output="";
+
+posts.forEach(post=>{
+
+output+=`
+
+<div class="post">
+
+<h2>${post.title}</h2>
+
+<p>${post.content}</p>
+
+<p><b>Author:</b> ${post.author}</p>
+
+<button onclick="deletePost('${post._id}')">
+Delete
+</button>
+
+<button onclick="editPost(
+'${post._id}',
+'${post.title}',
+'${post.content}'
+)">
+Edit
+</button>
+
+<div class="comments">
+
+<h3>Comments</h3>
+
+<div id="comments-${post._id}"></div>
+
+<input
+type="text"
+id="comment-${post._id}"
+placeholder="Write Comment">
+
+<button onclick="addComment('${post._id}')">
+
+Add Comment
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("posts").innerHTML=output;
+
+posts.forEach(post=>{
+
+loadComments(post._id);
+
+});
+
+}
+
+async function createPost(){
+
+const title=document.getElementById("title").value;
+
+const content=document.getElementById("content").value;
+
+const author="User";
+
+const response=await fetch(API+"/posts",{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json",
+
+"token":token
+
+},
+
+body:JSON.stringify({
+
+title,
+
+content,
+
+author
+
+})
+
+});
+
+if(response.ok){
+
+document.getElementById("title").value="";
+
+document.getElementById("content").value="";
+
+loadPosts();
+
+}
+
+}
+
+async function deletePost(id){
+
+await fetch(API+"/posts/"+id,{
+
+method:"DELETE",
+
+headers:{
+
+token:token
+
+}
+
+});
+
+loadPosts();
+
+}
+
+function editPost(id,title,content){
+
+document.getElementById("title").value=title;
+
+document.getElementById("content").value=content;
+
+const button = document.querySelector("button");
+
+button.innerText = "Update Blog";
+
+button.onclick = async function () {
+
+    await fetch(API + "/posts/" + id, {
+
+        method: "PUT",
+
+        headers: {
+            "Content-Type": "application/json",
+            "token": token
+        },
+
+        body: JSON.stringify({
+            title: document.getElementById("title").value,
+            content: document.getElementById("content").value,
+            author: "User"
+        })
+
+    });
+
+    document.getElementById("title").value = "";
+    document.getElementById("content").value = "";
+
+    button.innerText = "Publish Blog";
+    button.onclick = createPost;
+
+    loadPosts();
+
+};
+
+}
+
+async function loadComments(postId){
+
+const response=await fetch(API+"/comments/"+postId);
+
+const comments=await response.json();
+
+let output="";
+
+comments.forEach(comment=>{
+
+output+=`
+<p><b>${comment.username}</b> : ${comment.comment}</p>
+`;
+
+});
+
+document.getElementById("comments-"+postId).innerHTML=output;
+
+}
+
+async function addComment(postId){
+
+const comment=document.getElementById("comment-"+postId).value;
+
+if(comment==="") return;
+
+await fetch(API+"/comments",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+postId:postId,
+
+username:"User",
+
+comment:comment
+
+})
+
+});
+
+document.getElementById("comment-"+postId).value="";
+
+loadComments(postId);
+
+}
+
+function logout(){
+
+localStorage.removeItem("token");
+
+window.location="login.html";
+
+}
+
+loadPosts();
+
+</script>
+
+</body>
+</html>
