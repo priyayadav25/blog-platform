@@ -1,75 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Blog Platform</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <div class="container">
 
-    <h1>Create Account</h1>
+<h1>Create Account</h1>
 
-    <input type="text" id="username" placeholder="Username">
+<form id="registerForm">
 
-    <input type="email" id="email" placeholder="Email">
+<input
+type="text"
+id="username"
+placeholder="Username"
+required>
 
-    <input type="password" id="password" placeholder="Password">
+<input
+type="email"
+id="email"
+placeholder="Email"
+required>
 
-    <button onclick="register()">Register</button>
+<input
+type="password"
+id="password"
+placeholder="Password"
+required>
 
-    <p id="message"></p>
+<button type="submit">
+Register
+</button>
 
-    <p>
-        Already have an account?
-        <a href="login.html">Login</a>
-    </p>
+</form>
+
+<p id="message"></p>
+
+<p>
+Already have an account?
+
+<a href="login.html">
+Login
+</a>
+
+</p>
 
 </div>
 
 <script>
-async function register(){
 
-    const username = document.getElementById("username").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+document.getElementById("registerForm")
+.addEventListener("submit", register);
 
-    if(username==="" || email==="" || password===""){
-        document.getElementById("message").innerHTML="Please fill all fields";
-        return;
-    }
+async function register(e){
 
-    const response = await fetch("http://localhost:5000/api/auth/register",{
+e.preventDefault();
 
-        method:"POST",
+const username =
+document.getElementById("username").value;
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+const email =
+document.getElementById("email").value;
 
-        body:JSON.stringify({
-            username,
-            email,
-            password
-        })
+const password =
+document.getElementById("password").value;
 
-    });
+const response =
+await fetch(
+"http://localhost:5000/api/auth/register",
+{
 
-    const data = await response.json();
+method:"POST",
 
-    document.getElementById("message").innerHTML=data.message;
+headers:{
+"Content-Type":"application/json"
+},
 
-    if(data.message==="Registered"){
-        setTimeout(()=>{
-            window.location="login.html";
-        },1000);
-    }
+body:JSON.stringify({
+
+username,
+email,
+password
+
+})
+
+});
+
+const data =
+await response.json();
+
+document.getElementById("message")
+.innerHTML=data.message;
+
+if(response.ok){
+
+setTimeout(()=>{
+
+window.location="login.html";
+
+},1000);
 
 }
+
+}
+
 </script>
 
 </body>
 </html>
-
